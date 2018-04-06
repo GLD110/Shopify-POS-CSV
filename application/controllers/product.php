@@ -1,31 +1,15 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php //if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 class Product extends MY_Controller {
 
   public function __construct() {
     parent::__construct();
     $this->load->model( 'Product_model' );
-    $this->load->model( 'Make_model' );
-    $this->load->model( 'Model_model' );
-    $this->load->model( 'Year_model' );
-
-    // Define the search values
-    $this->_searchConf  = array(
-      'name' => '',
-      'make' => '',
-      'model' => '',
-      'year' => '',
-      'shop' => $this->_default_store,
-      'page_size' => $this->config->item('PAGE_SIZE'),
-      'sort_field' => 'product_id',
-      'sort_direction' => 'DESC',
-    );
-    $this->_searchSession = 'product_app_page';
+    ini_set('max_execution_time', 36000);
   }
 
   public function index(){
     $this->is_logged_in();
-
     $this->manage();
   }
 
@@ -33,473 +17,153 @@ class Product extends MY_Controller {
     // Check the login
     $this->is_logged_in();
 
-    // Init the search value
-    $this->initSearchValue();
-
-    // Get data
-    $this->Product_model->rewriteParam($this->_searchVal['shop']);
-    $arrCondition =  array(
-      'name' => $this->_searchVal['name'],
-      'make' => trim(preg_replace('/\s\s+/', ' ', $this->_searchVal['make'])),
-      'model' => trim(preg_replace('/\s\s+/', ' ', $this->_searchVal['model'])),
-      'year' => trim(preg_replace('/\s\s+/', ' ', $this->_searchVal['year'])),
-      'sort' => $this->_searchVal['sort_field'] . ' ' . $this->_searchVal['sort_direction'],
-      'page_number' => $page,
-      'page_size' => $this->_searchVal['page_size'],
-    );
-
-    //var_dump($this->_searchVal['model']);exit;
-
-    $data['query'] =  $this->Product_model->getList( $arrCondition );
-    $data['total_count'] = $this->Product_model->getTotalCount();
-    $data['page'] = $page;
-
-    // Store List
-    $arr = array();
-    foreach( $this->_arrStoreList as $shop => $row ) $arr[ $shop ] = $shop;
-    $data['arrStoreList'] = $arr;
-
-    //Make List
-    $make_arr = array();
-    $make_arr[0] = '';
-    $temp_arr =  $this->Make_model->getList();
-    $temp_arr = $temp_arr->result();
-    foreach( $temp_arr as $make ) $make_arr[ $make->id ] = $make->prefix;
-    $data['make_arr'] = $make_arr;
-
-    $arrCondition2 =  array(
-      'name' => $this->_searchVal['name'],
-      'make' => trim(preg_replace('/\s\s+/', ' ', $this->_searchVal['make']))
-    );
-
-    // Get data
-    $temp =  $this->Product_model->getList( $arrCondition2 );
-    $product_list = $temp->result();
-
-    //model List
-    $model_arr = array();
-    $model_arr[0] = '';
-    $temp_arr =  $this->Model_model->getList();
-    $temp_arr = $temp_arr->result();
-
-    foreach( $temp_arr as $model ) {
-      foreach($product_list as $product){
-        $model_s = trim(preg_replace('/\s\s+/', ' ', $model->prefix));
-        if(strpos($product->tags, $model_s))
-          $model_arr[ $model->id ] = $model->prefix;
-      }
-    }
-
-    //year List
-    $year_arr = array();
-    $year_arr[0] = '';
-    $temp_arr =  $this->Year_model->getList();
-    $temp_arr = $temp_arr->result();
-
-    foreach( $temp_arr as $year ) {
-      foreach($product_list as $product){
-        $year_s = trim(preg_replace('/\s\s+/', ' ', $year->prefix));
-        if(strpos($product->tags, $year_s))
-          $year_arr[ $year->id ] = $year->prefix;
-      }
-    }
-
-    //Model List
-    // $model_arr = array();
-    // $model_arr[0] = '';
-    // $temp_arr =  $this->Model_model->getList();
-    // $temp_arr = $temp_arr->result();
-    // foreach( $temp_arr as $model ) $model_arr[ $model->id ] = $model->prefix;
-    $data['model_arr'] = $model_arr;
-
-    //Year List
-    // $year_arr = array();
-    // $year_arr[0] = '';
-    // $temp_arr =  $this->Year_model->getList();
-    // $temp_arr = $temp_arr->result();
-    // foreach( $temp_arr as $year ) $year_arr[ $year->id ] = $year->prefix;
-    $data['year_arr'] = $year_arr;
-
-    // Define the rendering data
-    $data = $data + $this->setRenderData();
-
-    // Load Pagenation
-    $this->load->library('pagination');
-
     $this->load->view('view_header');
-    $this->load->view('view_product', $data );
+    $this->load->view('view_product');
     $this->load->view('view_footer');
   }
 
-  public function update( $type, $pk )
+  function csv_to_array($filename='', $delimiter=',')
   {
-    $data = array();
+  	if(!file_exists($filename) || !is_readable($filename))
+  		return FALSE;
 
-    switch( $type )
-    {
-        case 'type' : $data['type'] = $this->input->post('value'); break;
-        case 'title' : $data['title'] = $this->input->post('value'); break;
-        case 'sku' : $data['sku'] = $this->input->post('value'); break;
-        case 'item_per_square' : $data['item_per_square'] = str_replace( ',', '.', $this->input->post('value') ); break;
-    }
-    $this->Product_model->update( $pk, $data );
+  	$header = NULL;
+  	$data = array();
+  	if (($handle = fopen($filename, 'r')) !== FALSE)
+  	{
+  		while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE)
+  		{
+  			if(!$header)
+  				$header = $row;
+  			else
+  				$data[] = array_combine($header, $row);
+  		}
+  		fclose($handle);
+  	}
+  	return $data;
   }
 
-  public function sync( $shop, $page = 1 )
+  public function update_pos()
   {
-    $this->load->model( 'Process_model' );
+    // Check the login
+    $this->is_logged_in();
 
-    // Set the store information
-    $this->Product_model->rewriteParam( $shop );
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST");
 
-    $this->load->model( 'Shopify_model' );
-    $this->Shopify_model->setStore( $shop, $this->_arrStoreList[$shop]->app_id, $this->_arrStoreList[$shop]->app_secret );
-
-    // Get the lastest day
-    $last_day = $this->Product_model->getLastUpdateDate();
-
-    // Retrive Data from Shop
-    $count = 0;
-
-    // Make the action with update date or page
-    $action = 'products.json?';
-    if( $last_day != '' && $last_day != $this->config->item('CONST_EMPTY_DATE') && $page == 1 )
+    if(isset( $_GET[ "file_name" ]))
     {
-      $action .= 'limit=250&updated_at_min=' . urlencode( $last_day );
-    }
-    else
-    {
-      $action .= 'limit=20&page=' . $page;
-    }
+      $base_url = $this->config->item('base_url');
+      $app_path = $this->config->item('app_path');
 
-    // Retrive Data from Shop
-    $productInfo = $this->Shopify_model->accessAPI( $action );
+      //Import Product array from CSV
+      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
 
-    // Store to database
-    if( isset($productInfo->products) && is_array($productInfo->products) )
-    {
-      foreach( $productInfo->products as $product )
+      $this->load->model( 'Shopify_model' );
+      $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
+      $pos_tag = $_GET[ "pos_tag" ];
+      //set_time_limit(0);
+      //$pos = $pos_products[0];
+      foreach($pos_products as $pos)
       {
-        $this->Process_model->product_create( $product, $this->_arrStoreList[$shop] );
-      }
-    }
+        $action = 'products.json?fields=id,tags&' . 'handle=' . $pos['Handle'];
+        $productInfo = $this->Shopify_model->accessAPI( $action );
+        $product = $productInfo->products[0];
+        $tags = $product->tags;
+        if($tags == ""){
+          $tags = $pos_tag;
+        }
+        else {
+          $tags = $tags . ', ' . $pos_tag;
+        }
 
-    // Get the count of product
-    if( $last_day != '' && $last_day != $this->config->item('CONST_EMPTY_DATE') && $page == 1 )
-    {
-      $count = 0;
-    }
-    else
-    {
-      if( isset( $productInfo->products )) $count = count( $productInfo->products );
-      $page ++;
-    }
+        $action = 'products/' . $product->id . '.json';
+        $products_array = array(
+            'product' => array(
+                "id" => $product->id,
+                "published_scope" => 'global' ,
+                "tags" => $tags
+            )
+        );
+        // Retrive Data from Shop
+        $update_productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'PUT' );
 
-    if( $count == 0 )
-      echo 'success';
-    else
-      echo $page . '_' . $count;
-  }
-
-  public function get_Make(){
-
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST");
-    header('Content-Type: application/json');
-
-    //Make List
-    $make_arr = array();
-    $make_arr[0] = '';
-    $temp_arr =  $this->Make_model->getList();
-    $temp_arr = $temp_arr->result();
-    foreach( $temp_arr as $make ) $make_arr[ $make->id ] = $make->prefix;
-    echo json_encode( $make_arr );
-  }
-
-  public function get_MMY(){
-
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST");
-    header('Content-Type: application/json');
-
-    if( isset( $_POST[ "make" ] ) && !(isset( $_POST[ "model" ] )) ){
-      $arrCondition =  array(
-        'shop' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "shop" ])),
-        'make' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "make" ]))
-      );
-
-      // Get data
-      $temp =  $this->Product_model->getList( $arrCondition );
-      $product_list = $temp->result();
-
-      //Model List
-      $model_arr = array();
-      $model_arr[0] = '';
-      $temp_arr =  $this->Model_model->getList();
-      $temp_arr = $temp_arr->result();
-      foreach( $temp_arr as $model ) {
-        foreach($product_list as $product){
-          $model_s = trim(preg_replace('/\s\s+/', ' ', $model->prefix));
-          if(strpos($product->tags, $model_s))
-            $model_arr[ $model->id ] = $model->prefix;
+        if(!isset($update_productInfo->product)){
+          var_dump("error" . '-' .$pos['Handle']);
+        }
+        else{
+          var_dump("success" . '-' . $pos['Handle']);
         }
       }
-      echo json_encode($model_arr);
-    }
-
-    if( isset( $_POST[ "model" ] ) && !(isset( $_POST[ "year" ] ))){
-      $arrCondition =  array(
-        'shop' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "shop" ])),
-        'make' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "make" ])),
-        'model' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "model" ])),
-      );
-
-      // Get data
-      $temp =  $this->Product_model->getList( $arrCondition );
-      $product_list = $temp->result();
-
-      //year List
-      $year_arr = array();
-      $year_arr[0] = '';
-      $temp_arr =  $this->Year_model->getList();
-      $temp_arr = $temp_arr->result();
-
-      foreach( $temp_arr as $year ) {
-        foreach($product_list as $product){
-          $year_s = trim(preg_replace('/\s\s+/', ' ', $year->prefix));
-          if(strpos($product->tags, $year_s))
-            $year_arr[ $year->id ] = $year->prefix;
-        }
-      }
-      echo json_encode($year_arr);
-    }
-
-    if( isset( $_POST[ "year" ] ) ){
-      $arrCondition =  array(
-        'shop' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "shop" ])),
-        'make' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "make" ])),
-        'model' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "model" ])),
-        'year' => trim(preg_replace('/\s\s+/', ' ', $_POST[ "year" ])),
-      );
-
-      // Get data
-      $temp =  $this->Product_model->getList( $arrCondition );
-      $product_list = $temp->result();
-
-      echo json_encode($product_list);
+      echo "POS Updated";
     }
   }
 
-  function manageMake(){
-      // Check the login
-      $this->is_logged_in();
+  public function upload_csv()
+  {
+    // Check the login
+    $this->is_logged_in();
 
-      if($this->session->userdata('role') == 'admin'){
-          $data['query'] =  $this->Make_model->getList();
-          $data['arrStoreList'] =  $this->_arrStoreList;
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST");
 
-          $this->load->view('view_header');
-          $this->load->view('view_make', $data);
-          $this->load->view('view_footer');
-      }
-  }
+    $data = array();
+    $base_url = $this->config->item('base_url');
+    $app_path = $this->config->item('app_path');
 
-  function delMake(){
-      if($this->session->userdata('role') == 'admin'){
-          $id = $this->input->get_post('del_id');
-          $returnDelete = $this->Make_model->delete( $id );
-          if( $returnDelete === true ){
-              $this->session->set_flashdata('falsh', '<p class="alert alert-success">One item deleted successfully</p>');
-          }
-          else{
-              $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! deleted unsuccessfully : ' . $returnDelete . '</p>');
-          }
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+       if($_FILES['file']['name'] == '') {
+          echo "Please choose the csv file !";
       }
       else{
-          $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! You have no rights to deltete</p>');
-      }
-      redirect('product/manageMake');
-      exit;
-  }
+          $name     = $_FILES['file']['name'];
+          $tmpName  = $_FILES['file']['tmp_name'];
+          $error    = $_FILES['file']['error'];
+          $size     = $_FILES['file']['size'];
+          $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-  function createMake(){
-     if($this->session->userdata('role') == 'admin'){
-      $this->form_validation->set_rules('prefix', 'Prefix', 'callback_prefix_check');
-      //$this->form_validation->set_rules('password', 'Password', 'required|matches[cpassword]');
-
-      if ($this->form_validation->run() == FALSE){
-          echo validation_errors('<div class="alert alert-danger">', '</div>');
-          exit;
-      }
-      else{
-            if($this->Make_model->createMake()){
-                echo '<div class="alert alert-success">This make created successfully</div>';
-                //redirect('product/manageMake');
-                exit;
-            }
-            else{
-                echo '<div class="alert alert-danger">Sorry ! something went wrong </div>';
-                exit;
-            }
+          switch ($error) {
+              case UPLOAD_ERR_OK:
+                  $valid = true;
+                  //validate file extensions
+                  if ( !in_array($ext, array('csv')) ) {
+                      $valid = false;
+                      $response = 'Invalid file extension.';
+                  }
+                  //validate file size
+                  if ( $size/1024/1024 > 50 ) {
+                      $valid = false;
+                      $response = 'File size is exceeding maximum allowed size.';
+                  }
+                  //upload file
+                  if ($valid) {
+                      $upload_dir = $app_path . 'uploads/csv/';
+                      $targetPath =  $upload_dir . $name;
+                      move_uploaded_file($tmpName, $targetPath);
+                      $response = $name;
+                  }
+                  break;
+              case UPLOAD_ERR_INI_SIZE:
+                  $response = 'The uploaded file exceeds the upload_max_filesize directive in php.ini.';
+                  break;
+              case UPLOAD_ERR_PARTIAL:
+                  $response = 'The uploaded file was only partially uploaded.';
+                  break;
+              case UPLOAD_ERR_NO_FILE:
+                  $response = 'No file was uploaded.';
+                  break;
+              case UPLOAD_ERR_NO_TMP_DIR:
+                  $response = 'Missing a temporary folder. Introduced in PHP 4.3.10 and PHP 5.0.3.';
+                  break;
+              case UPLOAD_ERR_CANT_WRITE:
+                  $response = 'Failed to write file to disk. Introduced in PHP 5.1.0.';
+                  break;
+              default:
+                  $response = 'Unknown error';
+              break;
           }
-     }
-     else{
-         echo '<div class="alert alert-danger">Invalid make</div>';
-         exit;
-     }
-  }
-
-  function updateMake( $key ){
-    if($this->session->userdata('role') == 'admin'){
-      $val = $this->input->post('value');
-      $pk =  $this->input->post('pk');
-      $data = array(
-        $key => $val
-      );
-
-      $this->Make_model->update( $pk, $data );
-    }
-  }
-
-  function manageModel(){
-      // Check the login
-      $this->is_logged_in();
-
-      if($this->session->userdata('role') == 'admin'){
-          $data['query'] =  $this->Model_model->getList();
-          $data['arrStoreList'] =  $this->_arrStoreList;
-
-          $this->load->view('view_header');
-          $this->load->view('view_model', $data);
-          $this->load->view('view_footer');
+          echo $response;
       }
-  }
-
-  function delModel(){
-      if($this->session->userdata('role') == 'admin'){
-          $id = $this->input->get_post('del_id');
-          $returnDelete = $this->Model_model->delete( $id );
-          if( $returnDelete === true ){
-              $this->session->set_flashdata('falsh', '<p class="alert alert-success">One item deleted successfully</p>');
-          }
-          else{
-              $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! deleted unsuccessfully : ' . $returnDelete . '</p>');
-          }
-      }
-      else{
-          $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! You have no rights to deltete</p>');
-      }
-      redirect('product/manageModel');
-      exit;
-  }
-
-  function createModel(){
-     if($this->session->userdata('role') == 'admin'){
-      $this->form_validation->set_rules('prefix', 'Prefix', 'callback_prefix_check');
-      //$this->form_validation->set_rules('password', 'Password', 'required|matches[cpassword]');
-
-      if ($this->form_validation->run() == FALSE){
-          echo validation_errors('<div class="alert alert-danger">', '</div>');
-          exit;
-      }
-      else{
-            if($this->Model_model->createModel()){
-                echo '<div class="alert alert-success">This model created successfully</div>';
-                //redirect('product/manageModel');
-                exit;
-            }
-            else{
-                echo '<div class="alert alert-danger">Sorry ! something went wrong </div>';
-                exit;
-            }
-          }
-     }
-     else{
-         echo '<div class="alert alert-danger">Invalid model</div>';
-         exit;
-     }
-  }
-
-  function updateModel( $key ){
-    if($this->session->userdata('role') == 'admin'){
-      $val = $this->input->post('value');
-      $pk =  $this->input->post('pk');
-      $data = array(
-        $key => $val
-      );
-
-      $this->Model_model->update( $pk, $data );
-    }
-  }
-
-  function manageYear(){
-      // Check the login
-      $this->is_logged_in();
-
-      if($this->session->userdata('role') == 'admin'){
-          $data['query'] =  $this->Year_model->getList();
-          $data['arrStoreList'] =  $this->_arrStoreList;
-
-          $this->load->view('view_header');
-          $this->load->view('view_year', $data);
-          $this->load->view('view_footer');
-      }
-  }
-
-  function delYear(){
-      if($this->session->userdata('role') == 'admin'){
-          $id = $this->input->get_post('del_id');
-          $returnDelete = $this->Year_model->delete( $id );
-          if( $returnDelete === true ){
-              $this->session->set_flashdata('falsh', '<p class="alert alert-success">One item deleted successfully</p>');
-          }
-          else{
-              $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! deleted unsuccessfully : ' . $returnDelete . '</p>');
-          }
-      }
-      else{
-          $this->session->set_flashdata('falsh', '<p class="alert alert-danger">Sorry! You have no rights to deltete</p>');
-      }
-      redirect('product/manageYear');
-      exit;
-  }
-
-  function createYear(){
-     if($this->session->userdata('role') == 'admin'){
-      $this->form_validation->set_rules('prefix', 'Prefix', 'callback_prefix_check');
-      //$this->form_validation->set_rules('password', 'Password', 'required|matches[cpassword]');
-
-      if ($this->form_validation->run() == FALSE){
-          echo validation_errors('<div class="alert alert-danger">', '</div>');
-          exit;
-      }
-      else{
-            if($this->Year_model->createYear()){
-                echo '<div class="alert alert-success">This year created successfully</div>';
-                //redirect('product/manageYear');
-                exit;
-            }
-            else{
-                echo '<div class="alert alert-danger">Sorry ! something went wrong </div>';
-                exit;
-            }
-          }
-     }
-     else{
-         echo '<div class="alert alert-danger">Invalid year</div>';
-         exit;
-     }
-  }
-
-  function updateYear( $key ){
-    if($this->session->userdata('role') == 'admin'){
-      $val = $this->input->post('value');
-      $pk =  $this->input->post('pk');
-      $data = array(
-        $key => $val
-      );
-
-      $this->Year_model->update( $pk, $data );
     }
   }
 }

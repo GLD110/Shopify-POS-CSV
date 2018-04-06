@@ -53,6 +53,8 @@ class Shopify_model extends CI_Model
       curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1 );                                 // Required : Enable the HTTP response as return value
       curl_setopt($curl, CURLOPT_USERAGENT, $this->config->item('APP_NAME') );        // Optional : Add the client Agent name as APP_NAME
       curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0 );                                 // Required : Ignore the SSL Certificate Verify
+      curl_setopt($curl, CURLOPT_TIMEOUT, 0);
+      curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 0);
 
       $header = array(
         'Content-Type: application/json',

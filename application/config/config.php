@@ -403,8 +403,8 @@ $config['APP_STATE'] = md5( $config['APP_REDIRECT_URL'] . $config['APP_NAME'] );
 // Private Mode
 $config['PUBLIC_MODE'] = false;
 $config['USE_REDIRECT'] = true;
-$config['PRIVATE_SHOP'] = 'jz-general-store.myshopify.com';
-$config['PRIVATE_API_URL'] = 'https://5ba183b19da0a4725e95bff518babf90:41b747791bbe86824ac37c16bc10c204@jz-general-store.myshopify.com/admin/';   //Dev Shop
+$config['PRIVATE_SHOP'] = 'williamstoutarchitecturalbooks.myshopify.com';
+$config['PRIVATE_API_URL'] = 'https://57c847ca2c3783af7cc100e7850dfca3:10ca191e9f8e5e94833507c9e74ec4f9@williamstoutarchitecturalbooks.myshopify.com/admin/';   //Dev Shop
 
 // Constants
 $config['CONST_EMPTY_DATE'] = '0000-00-00 00:00:00';

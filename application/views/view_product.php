@@ -25,16 +25,22 @@ $config['base_url'] = base_url( $this->config->item('index_page') . '/product/ma
         </div><!-- /.box-header -->
 
         <div class="box-body">
-          <form role="form" action="<?php echo $config['base_url']; ?>" method="post" enctype="multipart/form-data">
+          <form role="form" id="submit_form" action="" method="post" enctype="multipart/form-data">
             <div class="box-body">
               <div class="form-group">
+                <label for="InputTag">Tag</label>
+                <input type="text" class="form-control" style="max-width: 50%;" id="InputTag" value="shopify_pos" disabled placeholder="POS Product Tag">
+              </div>
+              <div class="form-group">
                 <label for="exampleInputFile">File input</label>
-                <input type="file" name="fileToUpload" id="fileToUpload">
+                <input type="file" name="file" id="fileToUpload">
                 <p class="help-block">Only accept CSV Format</p>
               </div>
             </div><!-- /.box-body -->
             <div class="box-footer">
-              <button type="submit" class="btn btn-primary">Submit</button>
+              <input type="submit" id="upload_button" class="btn btn-primary" value="Upload">
+              <input id="update_pos" class="btn btn-warning" style="display: none;" value="Update POS Products">
+              <input id="update_pos_file" class="hidden" value="">
             </div>
           </form>
         </div><!-- /.box-body -->
@@ -45,66 +51,52 @@ $config['base_url'] = base_url( $this->config->item('index_page') . '/product/ma
 <script>
 
 $(document).ready(function(){
-
-  var sync_page = 0;
-  var sync_count = 0;
-
-  // Editable
-  $('.text').editable();
-
-  // Sync Button Config
-  $('.btn_sync').btn_init(
-    'sync',
-    { class : 'btn-warning', caption : 'Sync' },
-    { class : 'btn-default fa fa-spinner', caption : '' },
-    { class : 'btn-success', caption : 'Done' },
-    { class : 'btn-danger', caption : 'Error' }
-  );
-
-  $('.btn_sync').click(function(){
-    event.preventDefault();
-
-    $(this).btn_action( 'sync', 'pending' );
-
-    // Clear the sync value
-    sync_page = 1;
-    sync_count = 0;
-
-    // Work with process
-    funcSyncProcess();
-
-  });
-
-  var funcSyncProcess = function(){
+  $("#submit_form").on('submit',(function(e) {
+    e.preventDefault();
     $.ajax({
-      url: '<?php echo base_url($this->config->item('index_page') . '/product/sync') ?>' + '/' + $('#sel_shop').val() + '/' + sync_page,
-      type: 'GET'
-    }).done(function(data) {
-      console.log( data );
-      if( data == 'success' )
-      {
-        $('.btn_sync').btn_action( 'sync', 'success' );
+           url: "<?PHP echo base_url(); ?>product/upload_csv",
+           type: "POST",
+           data:  new FormData(this),
+           contentType: false,
+           cache: false,
+           processData:false,
+           success: function(data)
+                {
+                  if(data.search('.csv') == -1 ){
+                      alert(data);
+                  }else{
+                      $("#update_pos").addClass('btn-warning');
+                      $("#update_pos").removeClass('btn-success');
+                      $("#update_pos").val("Update POS Products");
+                      $('#update_pos').show();
+                      $('#update_pos_file').val(data);
+                    }
+                },
+            error: function(e)
+                {
 
-        setTimeout( function(){
-            window.location.reload();
-          }, 1000
-        );
-      }
-      else
-      {
-        var arr = data.split( '_' );
+                }
+      });
+   }));
 
-        sync_page = arr[0];
-        sync_count = parseInt(sync_count) + parseInt(arr[1]);
-
-        // Show the products
-        $('.btn_sync').removeClass( 'fa fa-spinner');
-        $('.btn_sync').html( sync_count + ' downloaded ...' );
-
-        // Continue to access
-        funcSyncProcess();
-      }
-    });
-  }
+   $("#update_pos").on('click',(function(e) {
+     var file_name = $('#update_pos_file').val();
+     var pos_tag = $('#InputTag').val();
+     $("#update_pos").val("POS Updating...");
+     $.ajax({
+            url: "<?PHP echo base_url(); ?>product/update_pos?file_name=" + file_name + '&pos_tag=' + pos_tag,
+            type: "GET",
+            success: function(data)
+                 {
+                   $("#update_pos").removeClass('btn-warning');
+                   $("#update_pos").addClass('btn-success');
+                   $("#update_pos").val("Successfully Updated");
+                 },
+             error: function(e)
+                 {
+                   alert(data);
+                 }
+       });
+    }));
 });
 </script>
