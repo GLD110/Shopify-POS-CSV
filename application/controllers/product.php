@@ -81,7 +81,6 @@ class Product extends MY_Controller {
         $products_array = array(
             'product' => array(
                 "id" => $product->id,
-                "published_scope" => 'global' ,
                 "tags" => $tags
             )
         );
