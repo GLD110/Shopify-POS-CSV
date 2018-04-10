@@ -404,7 +404,7 @@ $config['APP_STATE'] = md5( $config['APP_REDIRECT_URL'] . $config['APP_NAME'] );
 $config['PUBLIC_MODE'] = false;
 $config['USE_REDIRECT'] = true;
 $config['PRIVATE_SHOP'] = 'williamstoutarchitecturalbooks.myshopify.com';
-$config['PRIVATE_API_URL'] = 'https://57c847ca2c3783af7cc100e7850dfca3:10ca191e9f8e5e94833507c9e74ec4f9@williamstoutarchitecturalbooks.myshopify.com/admin/';   //Dev Shop
+$config['PRIVATE_API_URL'] = 'https://1fb792eef818d67ef31b8d09af598a14:522bc5f3d19ddf122a9bc2c2304278a6@williamstoutarchitecturalbooks.myshopify.com/admin/';   //Dev Shop
 
 // Constants
 $config['CONST_EMPTY_DATE'] = '0000-00-00 00:00:00';
@@ -422,13 +422,13 @@ $config['SETTING_ITEMS'] = array(
     'field' => 'app_id',
     'title' => 'API Key',
     'type' => 'text',
-    'example' => '7d27a35b6808c750e8376c38eb13f529'
+    'example' => '1fb792eef818d67ef31b8d09af598a14'
   ),
   array(
     'field' => 'app_secret',
     'title' => 'API Password',
     'type' => 'text',
-    'example' => 'd7c6a60a1959bb5fc1e437bb5acaa6aa'
+    'example' => '522bc5f3d19ddf122a9bc2c2304278a6'
   ),
   /*array(
     'field' => 'partner_code',
