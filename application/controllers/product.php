@@ -29,21 +29,87 @@ class Product extends MY_Controller {
 
   	$header = NULL;
   	$data = array();
-  	if (($handle = fopen($filename, 'r')) !== FALSE)
+  	if (($handle = $this->utf8_fopen_read($filename, 'r')) !== FALSE)
   	{
-  		while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE)
+  		while (($row = fgetcsv($handle, 10000, $delimiter)) !== FALSE)
   		{
   			if(!$header)
   				$header = $row;
   			else
-  				$data[] = array_combine($header, $row);
+          $data[] = array_combine($header, $row);
   		}
   		fclose($handle);
   	}
   	return $data;
   }
 
+  function utf8_fopen_read($fileName) {
+    $fc = iconv('windows-1250', 'utf-8', file_get_contents($fileName));
+    $handle=fopen("php://memory", "rw");
+    fwrite($handle, $fc);
+    fseek($handle, 0);
+    return $handle;
+  }
+
   public function update_pos()
+  {
+    // Check the login
+    $this->is_logged_in();
+
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, GET");
+
+    if(isset( $_GET[ "file_name" ]))
+    {
+      $base_url = $this->config->item('base_url');
+      $app_path = $this->config->item('app_path');
+
+      //Import Product array from CSV
+      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
+
+      $this->load->model( 'Shopify_model' );
+      $this->_default_store = $this->config->item('PRIVATE_SHOP');
+      $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
+      $pos_tag = $_GET[ "pos_tag" ];
+      set_time_limit(0);
+      $pos1 = $pos_products[0];
+      foreach($pos_products as $pos)
+      {
+        $action = 'products.json';
+
+        $products_array = array(
+            'product' => array(
+                "title" => $pos['Short Description'],
+                'body_html' => "<p>" . $pos['Long Description'] . "<\/p>",
+                "vendor" => $pos['Vendor'],
+                "product_type" => $pos['Type'],
+                "tags" => $pos['Category'],
+                'variants' => array(
+                  array(
+                    "price" => $pos['Retail'],
+                    "sku" => $pos['Item Code'],
+                    "barcode" => (float)$pos['UPC'],
+                    "weight" => $pos['Weight']
+                  )
+                ),
+            )
+        );
+
+        // Retrive Data from Shop
+        $productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'POST' );
+
+        if(!isset($productInfo->product)){
+          var_dump("error" . '-' . $productInfo->errors->product);
+        }
+        else{
+          var_dump("success" . '-' . $productInfo->product->handle);
+      }
+    }
+      echo "POS Updated";
+    }
+  }
+
+  public function update_pos1()
   {
     // Check the login
     $this->is_logged_in();
@@ -62,8 +128,8 @@ class Product extends MY_Controller {
       $this->load->model( 'Shopify_model' );
       $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
       $pos_tag = $_GET[ "pos_tag" ];
-      //set_time_limit(0);
-      //$pos = $pos_products[0];
+      set_time_limit(0);
+      $pos = $pos_products[0];
       foreach($pos_products as $pos)
       {
         $action = 'products.json?fields=id,tags&' . 'handle=' . $pos['Handle'];

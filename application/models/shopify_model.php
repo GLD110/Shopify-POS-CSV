@@ -36,7 +36,7 @@ class Shopify_model extends CI_Model
     }
 
     // Build the access url
-    $url = $this->config->item('PUBLIC_MODE') ? 'https://' . $this->_shop . $this->config->item('API_BASEURL') : $this->_baseurl;
+    $url = $this->config->item('PUBLIC_MODE') ? 'https://' . $this->_shop . $this->config->item('API_BASEURL') : $this->config->item('PRIVATE_API_URL');
     $url .= $action;
 
     // ********** Curl Access ********** //
