@@ -94,7 +94,7 @@ class Master_model extends CI_Model
     * @param mixed $where : where clause as string
     * @param mixed $order_by : order by clause
     */
-    /*public function getList( $where = '', $order_by = '', $select = '*' )
+    public function getList( $where = '', $order_by = '', $select = '*' )
     {
         // Build the sql statement
         $sql = 'SELECT ' . $select . ' FROM ' . $this->_tablename;
@@ -106,7 +106,7 @@ class Master_model extends CI_Model
         $query = $this->db->query($sql);
 
         return $query;
-    }*/
+    }
 
     /**
     * get the one record for relevant id
