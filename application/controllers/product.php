@@ -65,162 +65,54 @@ class Product extends MY_Controller {
       $app_path = $this->config->item('app_path');
 
       //Import Product array from CSV
-      $pos_brands = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . 'brands.csv');
-      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
+      $this->Product_model->rewriteParam($this->config->item('PRIVATE_SHOP'));
+      $shopify_products = $this->Product_model->getAll();
+      $ekey_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
 
       $this->load->model( 'Shopify_model' );
       $this->_default_store = $this->config->item('PRIVATE_SHOP');
       $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
-      $pos_tag = $_GET[ "pos_tag" ];
+
       set_time_limit(0);
-      $pos1 = $pos_products[0];
 
-      foreach($pos_brands as $brand){
-        if(strpos($brand['Brand'], '(') !== 0 ){
-          $url = 'https://sdc.semadatacoop.org/sdcapi/export/digitalassets';
+      foreach($shopify_products as $s_product){
+      foreach($ekey_products as $e_product){
+      $sku = $e_product['VenCode'] . $e_product['PartNumber'];
+      if($s_product->sku == $sku)
+      {
+        $price = $e_product['JobberPrice'] * 1.3;
+        $weight = $e_product['Weight'];
+        $totalqty = $e_product['TotalQty'];
+        $action = 'products/' . $s_product->product_id . '.json';
 
-          if(strpos($brand['Brand'], '/') !== false){
-            $brands = explode("/",$brand['Brand']);
-            foreach($brands as $b){
-              $strParam = json_encode( array('token'=>'EAAAAIkm2ddJGVus4iRRFgKjJ6jj3EUNUZTEV7kxJR3fQl4g', 'aaia_brandid'=>$b) );
-              // Init the session
-              $curl = curl_init();
-
-              // Set configuration value
-              curl_setopt($curl, CURLOPT_URL, $url );                                         // Required : Set the access url
-              curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');      // Optional : Set POST
-              if( $strParam != '' ) curl_setopt($curl, CURLOPT_POSTFIELDS, $strParam);        // Required : POST Parameter String
-              curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1 );                                 // Required : Enable the HTTP response as return value
-              curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0 );                                 // Required : Ignore the SSL Certificate Verify
-
-              $header = array(
-                'Content-Type: application/json',
-                'Accept: application/json',
-                'Content-Length: ' . strlen($strParam)
-              );
-
-              curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
-
-              // Access the remote URL
-              $result = curl_exec($curl);
-              $error_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-              // Close the session
-              curl_close($curl);
-
-              $DigitalAssets = json_decode($result)->DigitalAssets;
-
-              foreach($DigitalAssets as $asset)
-              foreach($pos_products as $pos)
-              {
-                if($pos['Brand'] == $brand['Brand'])
-                if($pos['ManufacturerPartNo'] == $asset->PartNumber && $asset->AssetTypeCode != 'LGO'){
-                $action = 'products.json';
-
-                $products_array = array(
-                    'product' => array(
-                        "title" => $pos['LongDescription'],
-                        'body_html' => "<p>" . $pos['LongDescription'] . "<\/p>",
-                        "vendor" => $pos['VendorName'],
-                        "product_type" => $pos['ManufacturerPartNo'],
-                        "tags" => $b['Brand'],
-                        "images" => array(
-                          array("src" => $asset->Link)
-                        ),
-                        'variants' => array(
-                          array(
-                            "price" => $pos['Cost'],
-                            "sku" => $pos['VenCode'] . $pos['PartNumber']
-                          )
-                        ),
-                    )
-                );
-
-                // Retrive Data from Shop
-                $productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'POST' );
-
-                if(!isset($productInfo->product)){
-                  var_dump("error" . '-' . $productInfo->errors->product);
-                }
-                else{
-                  var_dump("success" . '-' . $productInfo->product->handle);
-              }
-            }
-          }
-              echo "POS Updated";
-            }
-        }
-          else{
-            $strParam = json_encode( array('token'=>'EAAAAIkm2ddJGVus4iRRFgKjJ6jj3EUNUZTEV7kxJR3fQl4g', 'aaia_brandid'=>$brand['Brand']) );
-            // Init the session
-            $curl = curl_init();
-
-            // Set configuration value
-            curl_setopt($curl, CURLOPT_URL, $url );                                         // Required : Set the access url
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');      // Optional : Set POST
-            if( $strParam != '' ) curl_setopt($curl, CURLOPT_POSTFIELDS, $strParam);        // Required : POST Parameter String
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1 );                                 // Required : Enable the HTTP response as return value
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0 );                                 // Required : Ignore the SSL Certificate Verify
-
-            $header = array(
-              'Content-Type: application/json',
-              'Accept: application/json',
-              'Content-Length: ' . strlen($strParam)
-            );
-
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
-
-            // Access the remote URL
-            $result = curl_exec($curl);
-            $error_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-            // Close the session
-            curl_close($curl);
-
-            $DigitalAssets = json_decode($result)->DigitalAssets;
-
-            foreach($DigitalAssets as $asset)
-            foreach($pos_products as $pos)
-            {
-              if($pos['Brand'] == $brand['Brand'])
-              if($pos['ManufacturerPartNo'] == $asset->PartNumber && $asset->AssetTypeCode != 'LGO'){
-              $action = 'products.json';
-
-              $products_array = array(
-                  'product' => array(
-                      "title" => $pos['LongDescription'],
-                      'body_html' => "<p>" . $pos['LongDescription'] . "<\/p>",
-                      "vendor" => $pos['VendorName'],
-                      "product_type" => $pos['ManufacturerPartNo'],
-                      "tags" => $brand['Brand'],
-                      "images" => array(
-                        array("src" => $asset->Link)
-                      ),
-                      'variants' => array(
-                        array(
-                          "price" => $pos['Cost'],
-                          "sku" => $pos['VenCode'] . $pos['PartNumber']
-                        )
-                      ),
+        $products_array = array(
+            'product' => array(
+                "id" => $s_product->product_id,
+                'variants' => array(
+                  array(
+                    "id" => $s_product->variant_id,
+                    "price" => $price,
+                    "weight" => $weight,
+                    "inventory_quantity" => $totalqty,
+                    "inventory_management" => 'shopify'
                   )
-              );
+                ),
+            )
+        );
 
-              // Retrive Data from Shop
-              $productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'POST' );
+        // Retrive Data from Shop
+        $productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'PUT' );
 
-              if(!isset($productInfo->product)){
-                var_dump("error" . '-' . $productInfo->errors->product);
-              }
-              else{
-                var_dump("success" . '-' . $productInfo->product->handle);
-              }
-            }
-          }
-            echo "POS Updated";
-          }
+        if(!isset($productInfo->product)){
+          var_dump("error" . '-' . $productInfo->errors->product);
+        }
+        else{
+          var_dump("success" . '-' . $productInfo->product->handle);
+        }
       }
+      }}
+      echo "POS Updated";
     }
-  }
   }
 
   public function update_pos1()

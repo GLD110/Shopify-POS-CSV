@@ -37,8 +37,15 @@ class Product_model extends Master_model
     *     'is_imported' => '',            // Int, 0: all, 1: published, 2: not-published / default : 0
     *     'is_queue' => '',               // Int, 0: all, 1: queue, 2: not-queue, / default : 0
     *     'is_stock' => '',               // Int, 0: all, 1: in stock, 2: out of stock / default 0
-    );
+    *);
     */
+
+    public function getAll()
+    {
+      $result = parent::getList()->result();
+      return $result;
+    }
+
     public function getList( $arrCondition )
     {
         $where = array( 'shop' => $this->_shop );
