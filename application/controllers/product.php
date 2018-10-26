@@ -80,7 +80,7 @@ class Product extends MY_Controller {
       $sku = $e_product['VenCode'] . $e_product['PartNumber'];
       if($s_product->sku == $sku)
       {
-        $price = $e_product['JobberPrice'] * 1.3;
+        $compare_at_price = $e_product['JobberPrice'] * 1.3;
         $weight = $e_product['Weight'];
         $totalqty = $e_product['TotalQty'];
         $action = 'products/' . $s_product->product_id . '.json';
@@ -91,10 +91,8 @@ class Product extends MY_Controller {
                 'variants' => array(
                   array(
                     "id" => $s_product->variant_id,
-                    "price" => $price,
-                    "weight" => $weight,
-                    "inventory_quantity" => $totalqty,
-                    "inventory_management" => 'shopify'
+                    "price" => $e_product['JobberPrice'],
+                    "compare_at_price" => $compare_at_price
                   )
                 ),
             )
