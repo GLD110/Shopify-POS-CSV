@@ -67,7 +67,7 @@ class Product extends MY_Controller {
       //Import Product array from CSV
       $this->Product_model->rewriteParam($this->config->item('PRIVATE_SHOP'));
       $shopify_products = $this->Product_model->getAll();
-      $ekey_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
+      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
 
       $this->load->model( 'Shopify_model' );
       $this->_default_store = $this->config->item('PRIVATE_SHOP');
@@ -75,40 +75,30 @@ class Product extends MY_Controller {
 
       set_time_limit(0);
 
-      foreach($shopify_products as $s_product){
-      foreach($ekey_products as $e_product){
-      $sku = $e_product['VenCode'] . $e_product['PartNumber'];
-      if($s_product->sku == $sku)
+      $order = 0;
+
+      foreach($shopify_products as $s_product)
       {
-        $compare_at_price = $e_product['JobberPrice'] * 1.3;
-        $weight = $e_product['Weight'];
-        $totalqty = $e_product['TotalQty'];
-        $action = 'products/' . $s_product->product_id . '.json';
+        $action = 'variants/' . $s_product->variant_id . '.json';
 
         $products_array = array(
-            'product' => array(
-                "id" => $s_product->product_id,
-                'variants' => array(
-                  array(
+                'variant' => array(
                     "id" => $s_product->variant_id,
-                    "price" => $e_product['JobberPrice'],
-                    "compare_at_price" => $compare_at_price
-                  )
-                ),
-            )
+                    "barcode" => $pos_products[$order]['UPC']
+                )
         );
 
         // Retrive Data from Shop
         $productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'PUT' );
+        $order = $order + 1;
 
-        if(!isset($productInfo->product)){
-          var_dump("error" . '-' . $productInfo->errors->product);
+        if(!isset($productInfo->variant)){
+          var_dump("error" . '-' . $productInfo->errors->variant);
         }
         else{
-          var_dump("success" . '-' . $productInfo->product->handle);
+          var_dump("success" . '-' . $productInfo->variant->sku);
         }
       }
-      }}
       echo "POS Updated";
     }
   }
