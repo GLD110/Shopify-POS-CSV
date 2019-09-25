@@ -4,13 +4,13 @@ class Product extends MY_Controller {
 
   public function __construct() {
     parent::__construct();
-    $this->load->model( 'Product_model' );
+    //$this->load->model( 'Product_model' );
     ini_set('max_execution_time', 36000);
   }
 
   public function index(){
     $this->is_logged_in();
-    $this->manage();
+    $this->update_pos1();
   }
 
   public function manage( $page =  0 ){
@@ -111,47 +111,54 @@ class Product extends MY_Controller {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST");
 
-    if(isset( $_GET[ "file_name" ]))
+    if(true)
     {
       $base_url = $this->config->item('base_url');
       $app_path = $this->config->item('app_path');
 
       //Import Product array from CSV
-      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
+      $barcodes = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . 'barcodes.csv');
+      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . 'inventory.csv');
 
       $this->load->model( 'Shopify_model' );
       $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
-      $pos_tag = $_GET[ "pos_tag" ];
       set_time_limit(0);
-      $pos = $pos_products[0];
+      //var_dump($pos['FULLPART']);exit;
       foreach($pos_products as $pos)
       {
-        $action = 'products.json?fields=id,tags&' . 'handle=' . $pos['Handle'];
-        $productInfo = $this->Shopify_model->accessAPI( $action );
-        $product = $productInfo->products[0];
-        $tags = $product->tags;
-        if($tags == ""){
-          $tags = $pos_tag;
+        $temp_barcode = trim(preg_replace('/\s+/', ' ', $pos['FULLPART']));
+        $import = true;
+        foreach($barcodes as $barcode){
+          if($barcode['1'] == $temp_barcode)
+            {
+              $import = false;
+            }
         }
-        else {
-          $tags = $tags . ', ' . $pos_tag;
-        }
+        if($import)
+        {
+          $action = 'products.json';
 
-        $action = 'products/' . $product->id . '.json';
-        $products_array = array(
-            'product' => array(
-                "id" => $product->id,
-                "tags" => $tags
-            )
-        );
-        // Retrive Data from Shop
-        //$update_productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'PUT' );
+          $products_array = array(
+              'product' => array(
+                  "title" => trim(preg_replace('/\s+/', ' ', $pos['FULLPART'])) . ', ' . trim(preg_replace('/\s+/', ' ', $pos['MFR'])) . ', ' . trim(preg_replace('/\s+/', ' ', $pos['DESCRIPTION'])),
+                  "body_html" => "<p>" . trim(preg_replace('/\s+/', ' ', $pos['DESCRIPTION'])) . "<\/p>",
+                  "published" => 'true',
+                  'variants' => array(
+                    array(
+                      "barcode" => $pos['FULLPART']
+                    )
+                  )
+              )
+          );
+          // Retrive Data from Shop
+          $update_productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'POST' );
 
-        if(!isset($update_productInfo->product)){
-          var_dump("error" . '-' .$pos['Handle']);
-        }
-        else{
-          var_dump("success" . '-' . $pos['Handle']);
+          if(!isset($update_productInfo->product)){
+            var_dump("error" . '-' .trim(preg_replace('/\s+/', ' ', $pos['FULLPART'])));
+          }
+          else{
+            var_dump("success" . '-' . trim(preg_replace('/\s+/', ' ', $pos['FULLPART'])));
+          }
         }
       }
       echo "POS Updated";
