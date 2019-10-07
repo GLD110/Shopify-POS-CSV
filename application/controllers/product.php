@@ -153,7 +153,7 @@ class Product extends MY_Controller {
           // Retrive Data from Shop
           $update_productInfo = $this->Shopify_model->accessAPI( $action, $products_array, 'POST' );
 
-          //var_dump($update_productInfo);exit;
+          var_dump($update_productInfo);exit;
 
           if(!isset($update_productInfo->product)){
             var_dump("error" . '-' .trim(preg_replace('/\s+/', ' ', $pos['FULLPART'])));
