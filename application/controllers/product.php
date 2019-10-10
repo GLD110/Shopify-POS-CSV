@@ -22,10 +22,10 @@ class Product extends MY_Controller {
     $this->load->view('view_footer');
   }
 
-  // function csv_to_array($filename='', $delimiter=',')
-  // {
-  // 	if(!file_exists($filename) || !is_readable($filename))
-  // 		return FALSE;
+  function csv_to_array($filename='', $delimiter=',')
+  {
+  	if(!file_exists($filename) || !is_readable($filename))
+  		return FALSE;
 
   	$header = NULL;
   	$data = array();
