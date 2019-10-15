@@ -69,9 +69,9 @@ class Product extends MY_Controller {
       $shopify_products = $this->Product_model->getAll();
       $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
 
-      // $this->load->model( 'Shopify_model' );
-      // $this->_default_store = $this->config->item('PRIVATE_SHOP');
-      // $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
+      $this->load->model( 'Shopify_model' );
+      $this->_default_store = $this->config->item('PRIVATE_SHOP');
+      $this->Shopify_model->setStore( $this->_default_store, $this->_arrStoreList[$this->_default_store]->app_id, $this->_arrStoreList[$this->_default_store]->app_secret );
 
       set_time_limit(0);
 
