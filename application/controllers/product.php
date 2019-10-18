@@ -65,9 +65,9 @@ class Product extends MY_Controller {
       $app_path = $this->config->item('app_path');
 
       //Import Product array from CSV
-      // $this->Product_model->rewriteParam($this->config->item('PRIVATE_SHOP'));
-      // $shopify_products = $this->Product_model->getAll();
-      // $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
+      $this->Product_model->rewriteParam($this->config->item('PRIVATE_SHOP'));
+      $shopify_products = $this->Product_model->getAll();
+      $pos_products = $this->csv_to_array($this->config->item('app_path') . 'uploads/csv/' . $_GET[ "file_name" ]);
 
       $this->load->model( 'Shopify_model' );
       $this->_default_store = $this->config->item('PRIVATE_SHOP');
