@@ -56,8 +56,8 @@ class Product extends MY_Controller {
     // Check the login
     $this->is_logged_in();
 
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: POST, GET");
+    // header("Access-Control-Allow-Origin: *");
+    // header("Access-Control-Allow-Methods: POST, GET");
 
     if(isset( $_GET[ "file_name" ]))
     {
