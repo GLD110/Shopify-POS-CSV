@@ -11,7 +11,7 @@ class Master_model extends CI_Model
         if( $this->_shop == '' ) $this->_shop = $this->config->item('PRIVATE_SHOP');
     }
 
-    // public function getShop()
+    public function getShop()
     {
       return $this->_shop;
     }
