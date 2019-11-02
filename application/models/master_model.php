@@ -16,7 +16,7 @@ class Master_model extends CI_Model
       return $this->_shop;
     }
 
-    // public function rewriteParam( $shop )
+    public function rewriteParam( $shop )
     {
         $this->_shop = $shop;
     }
