@@ -13,7 +13,7 @@ class Product extends MY_Controller {
     $this->manage();
   }
 
-  // public function manage( $page =  0 ){
+  public function manage( $page =  0 ){
     // Check the login
     $this->is_logged_in();
 
