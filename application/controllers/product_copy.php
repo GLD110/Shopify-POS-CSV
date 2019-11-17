@@ -8,40 +8,40 @@ class Product extends MY_Controller {
     ini_set('max_execution_time', 36000);
   }
 
-  // public function index(){
-  //   $this->is_logged_in();
-  //   $this->manage();
-  // }
-  //
-  // public function manage( $page =  0 ){
-  //   // Check the login
-  //   $this->is_logged_in();
-  //
-  //   $this->load->view('view_header');
-  //   $this->load->view('view_product');
-  //   $this->load->view('view_footer');
-  // }
-  //
-  // function csv_to_array($filename='', $delimiter=',')
-  // {
-  // 	if(!file_exists($filename) || !is_readable($filename))
-  // 		return FALSE;
-  //
-  // 	$header = NULL;
-  // 	$data = array();
-  // 	if (($handle = $this->utf8_fopen_read($filename, 'r')) !== FALSE)
-  // 	{
-  // 		while (($row = fgetcsv($handle, 10000, $delimiter)) !== FALSE)
-  // 		{
-  // 			if(!$header)
-  // 				$header = $row;
-  // 			else
-  //         $data[] = array_combine($header, $row);
-  // 		}
-  // 		fclose($handle);
-  // 	}
-  // 	return $data;
-  // }
+  public function index(){
+    $this->is_logged_in();
+    $this->manage();
+  }
+
+  public function manage( $page =  0 ){
+    // Check the login
+    $this->is_logged_in();
+
+    $this->load->view('view_header');
+    $this->load->view('view_product');
+    $this->load->view('view_footer');
+  }
+
+  function csv_to_array($filename='', $delimiter=',')
+  {
+  	if(!file_exists($filename) || !is_readable($filename))
+  		return FALSE;
+
+  	$header = NULL;
+  	$data = array();
+  	if (($handle = $this->utf8_fopen_read($filename, 'r')) !== FALSE)
+  	{
+  		while (($row = fgetcsv($handle, 10000, $delimiter)) !== FALSE)
+  		{
+  			if(!$header)
+  				$header = $row;
+  			else
+          $data[] = array_combine($header, $row);
+  		}
+  		fclose($handle);
+  	}
+  	return $data;
+  }
 
   function utf8_fopen_read($fileName) {
     $fc = iconv('windows-1250', 'utf-8', file_get_contents($fileName));
