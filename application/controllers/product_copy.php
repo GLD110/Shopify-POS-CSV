@@ -2,7 +2,7 @@
 
 class Product extends MY_Controller {
 
-  public function __construct() {
+  // public function __construct() {
     parent::__construct();
     $this->load->model( 'Product_model' );
     ini_set('max_execution_time', 36000);
