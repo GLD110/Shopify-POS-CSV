@@ -51,7 +51,7 @@ class Product extends MY_Controller {
     return $handle;
   }
 
-  public function update_pos()
+  // public function update_pos()
   {
     // Check the login
     $this->is_logged_in();
