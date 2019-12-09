@@ -223,7 +223,7 @@ class Product extends MY_Controller {
   }
   }
 
-  public function update_pos1()
+  // public function update_pos1()
   {
     // Check the login
     $this->is_logged_in();
