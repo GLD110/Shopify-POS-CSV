@@ -8,7 +8,7 @@ class Product extends MY_Controller {
     ini_set('max_execution_time', 36000);
   }
 
-  public function index(){
+  // public function index(){
     $this->is_logged_in();
     $this->manage();
   }
